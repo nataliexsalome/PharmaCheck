@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaCheck: Medicine Verification Tool</title>
+
+    <!-- Google Fonts: Inter (for body) and Playfair Display (for headings) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        /* --- Global Styles & Variables (Adapted for Professional Theme) --- */
+        :root {
+            --primary-trust: #2A6A50; /* Deep Green - Trust/Security */
+            --secondary-alert: #D9534F; /* Red - Warning/Error */
+            --highlight-action: #4AB28B; /* Medium Green - Success/Action */
+            --pale-bg: #EAEFF1; /* Light Blue-Grey - Cleanliness */
+            --cream: #FFF8F0; /* Off-White Base */
+            --white: #ffffff;
+            --dark-text: #333333;
+            --light-text: #f0f0f0;
+            --heading-font: 'Playfair Display', serif;
+            --body-font: 'Inter', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body {
+            font-family: var(--body-font);
+            line-height: 1.6;
+            color: var(--dark-text);
+            background-color: var(--cream);
+            overflow-x: hidden;
+            padding-top: 70px; /* Space for fixed header */
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; width: 100%; }
+        h1, h2, h3 { font-family: var(--heading-font); color: var(--primary-trust); margin-bottom: 0.8em; line-height: 1.3; }
+        h1 { font-size: 3rem; }
+        h2 { font-size: 2.2rem; text-align: center; margin-bottom: 1.5em; color: var(--primary-trust); }
+        h3 { font-size: 1.4rem; color: var(--primary-trust); }
+        p { margin-bottom: 1em; }
+        a { text-decoration: none; color: var(--primary-trust); transition: color 0.3s ease; }
+        a:hover { color: var(--highlight-action); }
+        .content-section { padding: 60px 0; }
+        .alt-bg { background-color: var(--pale-bg); }
+        .rounded-box { border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+
+        /* --- CTA Button (Verification Button) --- */
+        .cta-button { 
+            display: inline-block; background-color: var(--primary-trust); color: var(--white); 
+            padding: 12px 25px; border-radius: 25px; font-family: var(--body-font); 
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border: none; 
+            cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; 
+            text-align: center; font-size: 0.9rem;
+            box-shadow: 0 4px 10px rgba(0, 128, 0, 0.2);
+        }
+        .cta-button:hover { background-color: var(--highlight-action); color: var(--white); transform: translateY(-2px); }
+
+        /* --- Header / Navigation Styles --- */
+        #main-header { 
+            background-color: var(--cream); 
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; 
+            padding: 10px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.08); 
+        }
+        /* Redefine flex-row specifically for the header container for better spacing */
+        #main-header .container.flex-row {
+            display: flex;
+            justify-content: space-between; /* Space out logo, nav, and right buttons */
+            align-items: center;
+        }
+        .logo a { font-family: var(--heading-font); font-size: 1.6rem; font-weight: bold; color: var(--primary-trust); font-style: italic; }
+        .auth-status { font-size: 0.8rem; color: var(--primary-trust); padding-right: 15px; }
+
+        /* Navigation Link Styles (Desktop) */
+        .main-nav ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+            margin: 0;
+        }
+        .main-nav ul li a {
+            color: var(--primary-trust);
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 5px 0;
+            border-bottom: 2px solid transparent; /* Initialize border for hover effect */
+            transition: color 0.3s ease, border-bottom 0.3s ease;
+            display: block;
+        }
+        .main-nav ul li a:hover {
+            color: var(--highlight-action);
+            border-bottom-color: var(--highlight-action);
+        }
+        .nav-right-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        /* Mobile Toggle (Hamburger) */
+        #mobile-menu-toggle {
+            display: none; /* Hide on desktop */
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            position: relative;
+            padding: 0;
+            z-index: 1001;
+        }
+        #mobile-menu-toggle span {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-trust);
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+        #mobile-menu-toggle.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        #mobile-menu-toggle.active span:nth-child(2) { opacity: 0; }
+        #mobile-menu-toggle.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+        
+        /* --- Verification Section (Replaces Hero) --- */
+        #verification-tool { 
+            background-color: var(--pale-bg); min-height: 50vh; display: flex; 
+            justify-content: center; align-items: center; text-align: center; 
+            padding: 80px 20px 60px; border-bottom: 5px solid var(--primary-trust);
+        }
+        .verification-box {
+            background-color: var(--white);
+            padding: 35px;
+            max-width: 650px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-top: 5px solid var(--primary-trust);
+        }
+        .verification-box h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--dark-text);
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+            border: 2px solid var(--pale-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        #serial-input {
+            flex-grow: 1;
+            padding: 15px 15px 15px 50px; /* Space for icon */
+            font-size: 1.1rem;
+            border: none;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-trust);
+            font-size: 1.2rem;
+        }
+        .input-wrapper {
+            position: relative;
+            flex-grow: 1;
+        }
+
+        #verify-button {
+            background-color: var(--highlight-action);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: background-color 0.3s ease;
+        }
+        #verify-button:hover {
+            background-color: var(--primary-trust);
+        }
+        
+        /* Verification Results Area */
+        #results-area {
+            margin-top: 30px;
+            padding: 20px;
+            text-align: left;
+            border: 1px solid #eee;
+            min-height: 100px;
+        }
+        .result-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .result-message.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .result-authentic { background-color: #D4EDDA; color: #155724; border: 1px solid #C3E6CB; }
+        .result-counterfeit { background-color: #F8D7DA; color: #721C24; border: 1px solid #F5C6CB; }
+        .result-expired { background-color: #FFF3CD; color: #856404; border: 1px solid #FFEEBA; }
+        .details-list { list-style: none; padding: 0; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; }
+        .details-list li { margin-bottom: 8px; font-size: 0.95rem; }
+        .details-list strong { color: var(--dark-text); font-weight: 700; display: inline-block; min-width: 120px; }
+
+        /* --- Features Section (Replaces Services) --- */
+        .features-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; text-align: center; }
+        .feature-item { background: var(--white); padding: 25px 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); transition: transform 0.3s ease, box-shadow 0.3s ease; border-top: 4px solid var(--highlight-action); }
+        .feature-item:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); }
+        .feature-icon { font-size: 2.5rem; color: var(--primary-trust); margin-bottom: 15px; transition: color 0.3s ease; }
+        .feature-item:hover .feature-icon { color: var(--highlight-action); }
+        .feature-item h3 { margin-bottom: 0.5em; font-size: 1.3rem; }
+        .feature-item p { font-size: 0.9rem; }
+        
+        /* --- Utility Classes --- */
+        .flex-row { display: flex; justify-content: space-between; align-items: center; }
+        .hidden { display: none !important; }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            body { padding-top: 60px; }
+            .flex-row { flex-direction: column; text-align: center; }
+            .auth-status { padding: 10px 0 0; }
+            .input-group { flex-direction: column; }
+            .verification-box { padding: 20px; }
+            #verify-button { width: 100%; padding: 12px; }
+            .input-wrapper { width: 100%; }
+            #serial-input { width: 100%; padding-left: 15px; } /* Remove icon padding on small screens */
+            .input-icon { display: none; }
+            .features-container { grid-template-columns: 1fr; }
+
+            /* Show the toggle */
+            #mobile-menu-toggle { display: block; }
+            .desktop-nav-cta { display: none !important; }
+            .auth-status { display: none; } /* Hide on mobile to save space */
+            
+            /* Hide desktop navigation */
+            .main-nav { display: none; }
+            
+            /* Mobile Navigation Overlap (Activated by JS) */
+            .main-nav.mobile-nav-active {
+                display: flex; /* Override display: none when active */
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background-color: var(--cream);
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 999;
+            }
+            .main-nav.mobile-nav-active ul {
+                flex-direction: column;
+                gap: 30px;
+            }
+            .main-nav.mobile-nav-active ul li a {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // setLogLevel('Debug'); // Enable Firestore debugging
+
+        // --- MANDATORY GLOBAL FIREBASE VARIABLES ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // --- END MANDATORY GLOBAL FIREBASE VARIABLES ---
+
+        let app, db, auth, userId = null;
+        let isAuthReady = false;
+
+        // Helper function for exponential backoff (minimal implementation)
+        const withBackoff = async (fn, retries = 3) => {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    return await fn();
+                } catch (error) {
+                    if (i === retries - 1) throw error;
+                    const delay = Math.pow(2, i) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        };
+
+        const initFirebase = async () => {
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.error("Firebase configuration is missing.");
+                return;
+            }
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            const authStatusElement = document.getElementById('auth-status');
+            
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    authStatusElement.textContent = `User ID: ${userId.substring(0, 8)}...`;
+                    isAuthReady = true;
+                    // Optional: Load initial data or state here
+                } else {
+                    // Sign in anonymously if no user is authenticated
+                    try {
+                        if (initialAuthToken) {
+                            await withBackoff(() => signInWithCustomToken(auth, initialAuthToken));
+                        } else {
+                            await withBackoff(() => signInAnonymously(auth));
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth failed:", error);
+                        authStatusElement.textContent = "Status: Auth Failed";
+                    }
+                }
+            });
+        };
+
+        // --- CORE APPLICATION LOGIC ---
+
+        // Mock database structure (Data tier)
+        const MOCK_STOCK = {
+            'A1234567890': { status: 'authentic', expiryDate: '2026-10-01', batch: 'BTX-45', manufacturer: 'PharmaCo Kenya' },
+            'C9876543210': { status: 'counterfeit', expiryDate: '2025-01-01', batch: 'XXX-01', manufacturer: 'Unknown' },
+            'E1112223334': { status: 'expired', expiryDate: '2024-01-01', batch: 'BTX-30', manufacturer: 'PharmaCo Kenya' },
+            'A0000000000': { status: 'authentic', expiryDate: '2025-12-31', batch: 'BTX-46', manufacturer: 'PharmaCo Kenya' },
+            'C1111111111': { status: 'counterfeit', expiryDate: '2026-03-01', batch: 'BTX-45', manufacturer: 'PharmaCo Kenya' }, // Cloned serial, but marked counterfeit for demo
+            'E4445556667': { status: 'expired', expiryDate: '2023-05-15', batch: 'OLD-22', manufacturer: 'Global Meds' },
+        };
+
+        const getResult = (serial) => {
+            // Check for exact match in mock data
+            const mockResult = MOCK_STOCK[serial];
+
+            if (mockResult) {
+                // Check if expired logic
+                const today = new Date();
+                const expiry = new Date(mockResult.expiryDate);
+                if (expiry < today && mockResult.status !== 'counterfeit') {
+                    mockResult.status = 'expired'; // Overwrite status if past date
+                }
+                return mockResult;
+            }
+
+            // Simulate partial match/not found logic for security
+            if (serial.startsWith('C') || serial.startsWith('c')) {
+                return { status: 'counterfeit', expiryDate: 'N/A', batch: 'UNK-FF', manufacturer: 'N/A' };
+            }
+
+            return { status: 'not found', expiryDate: 'N/A', batch: 'N/A', manufacturer: 'N/A' };
+        };
+
+        const renderResult = (serial, result) => {
+            const resultsArea = document.getElementById('results-area');
+            resultsArea.innerHTML = '';
+            
+            const now = new Date();
+            const logEntry = {
+                serial: serial,
+                timestamp: now.toISOString(),
+                status: result.status,
+                userId: userId,
+                appId: appId
+            };
+
+            let message, className;
+            let detailsHtml = '';
+
+            if (result.status === 'authentic') {
+                message = `✅ VERIFIED: This Amoxicillin Serial ID is Authentic and Valid.`;
+                className = 'result-authentic';
+                detailsHtml = `
+                    <li><strong>Status:</strong> Authentic and Safe</li>
+                    <li><strong>Expiry Date:</strong> ${result.expiryDate}</li>
+                    <li><strong>Batch Number:</strong> ${result.batch}</li>
+                    <li><strong>Manufacturer:</strong> ${result.manufacturer}</li>
+                `;
+            } else if (result.status === 'expired') {
+                message = `⚠️ WARNING: This Amoxicillin Serial ID is Expired. Do Not Dispense.`;
+                className = 'result-expired';
+                detailsHtml = `
+                    <li><strong>Status:</strong> EXPIRED!</li>
+                    <li><strong>Expiry Date:</strong> **${result.expiryDate}** (Past Date)</li>
+                    <li><strong>Batch Number:</strong> ${result.batch}</li>
+                    <li><strong>Manufacturer:</strong> ${result.manufacturer}</li>
+                    <li>**ACTION:** Quarantine stock immediately.</li>
+                `;
+            } else if (result.status === 'counterfeit') {
+                message = `❌ ALERT: Potential Counterfeit Detected. Engage Supervisor.`;
+                className = 'result-counterfeit';
+                detailsHtml = `
+                    <li><strong>Status:</strong> COUNTERFEIT</li>
+                    <li><strong>Reason:</strong> Serial number flagged or matched a known fraudulent identifier.</li>
+                    <li><strong>Batch Number:</strong> ${result.batch}</li>
+                    <li>**ACTION:** Immediately quarantine product and report to PPB.</li>
+                `;
+            } else { // not found
+                message = `❓ QUERY FAILED: Serial ID not found in system. Please re-enter or contact support.`;
+                className = 'result-expired'; // Use yellow for caution/not found
+                detailsHtml = `
+                    <li><strong>Status:</strong> Not Found</li>
+                    <li><strong>Action:</strong> Check input carefully, or contact your regulatory manager.</li>
+                `;
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `result-message ${className}`;
+            messageDiv.textContent = message;
+
+            const detailsUl = document.createElement('ul');
+            detailsUl.className = 'details-list';
+            detailsUl.innerHTML = detailsHtml;
+
+            resultsArea.appendChild(messageDiv);
+            resultsArea.appendChild(detailsUl);
+
+            // Trigger visibility animation
+            setTimeout(() => { messageDiv.classList.add('visible'); }, 50);
+
+            // Log the transaction to Firestore (Objective iii: Audit Logging)
+            logTransaction(logEntry);
+        };
+        
+        const logTransaction = async (logEntry) => {
+            if (!isAuthReady || !db) {
+                console.warn("Firestore not ready. Cannot log transaction.");
+                return;
+            }
+
+            const logCollectionPath = `artifacts/${appId}/users/${logEntry.userId}/verification_logs`;
+            
+            try {
+                await withBackoff(() => setDoc(doc(collection(db, logCollectionPath)), logEntry));
+                // console.log("Transaction logged successfully. This is a private collection for the user.");
+            } catch (error) {
+                console.error("Error logging transaction to Firestore:", error);
+            }
+        };
+
+
+        const handleVerification = () => {
+            const input = document.getElementById('serial-input').value.trim().toUpperCase();
+            if (input.length < 5) {
+                document.getElementById('results-area').innerHTML = '<div class="result-message result-expired visible">Please enter a valid serial or batch number (at least 5 characters).</div>';
+                return;
+            }
+
+            // Simulate network delay for verification process
+            document.getElementById('results-area').innerHTML = '<p style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Verifying against simulated database...</p>';
+
+            setTimeout(() => {
+                const result = getResult(input);
+                renderResult(input, result);
+            }, 1500); // 1.5 second delay simulation
+        };
+
+        // Initialize Firebase on load
+        document.addEventListener('DOMContentLoaded', initFirebase);
+
+        // Event Listeners for UI
+        document.addEventListener('DOMContentLoaded', function() {
+            const verifyButton = document.getElementById('verify-button');
+            const serialInput = document.getElementById('serial-input');
+            const toggle = document.getElementById('mobile-menu-toggle');
+            const nav = document.getElementById('main-navigation');
+
+            if (verifyButton) {
+                verifyButton.addEventListener('click', handleVerification);
+            }
+            if (serialInput) {
+                serialInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        handleVerification();
+                    }
+                });
+            }
+
+            // Mobile Nav Toggle
+            if (toggle && nav) {
+                toggle.addEventListener('click', () => {
+                    nav.classList.toggle('mobile-nav-active');
+                    toggle.classList.toggle('active');
+                    // Hide body overflow when mobile nav is open
+                    document.body.style.overflow = nav.classList.contains('mobile-nav-active') ? 'hidden' : 'auto';
+                });
+                nav.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        if (nav.classList.contains('mobile-nav-active')) {
+                            nav.classList.remove('mobile-nav-active');
+                            toggle.classList.remove('active');
+                            document.body.style.overflow = 'auto';
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+
+    <!-- Header -->
+    <header id="main-header">
+        <div class="container flex-row">
+            <div class="logo"><a href="#verification-tool">PharmaCheck</a></div>
+            
+            <!-- Main Navigation Links -->
+            <nav class="main-nav" id="main-navigation">
+                <ul>
+                    <!-- New Nav Links: Verif Tool and Report / Contact -->
+                    
+                    <li><a href="reportcontact.html">Report / Contact</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-right-actions">
+                <div id="auth-status" class="auth-status">Status: Connecting...</div>
+                <!-- Primary CTA button for desktop -->
+                <a href="#verification-tool" class="cta-button nav-button desktop-nav-cta">Verify Drug</a> 
+                <!-- Mobile Menu Toggle -->
+                <button id="mobile-menu-toggle" aria-label="Toggle Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 1. Verification Tool (Core Objective i) -->
+    <section id="verification-tool" class="content-section">
+        <div class="verification-box rounded-box">
+            <h2 class="h1" style="color: var(--primary-trust); margin-bottom: 5px;">Medicine Authentication Tool</h2>
+            <p style="margin-bottom: 25px; color: #666;">Enter the Amoxicillin batch or serial identifier below to confirm its legitimacy.</p>
+            
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <i class="fas fa-barcode input-icon"></i>
+                    <input type="text" id="serial-input" placeholder="e.g., A1234567890 or C9876543210" required>
+                </div>
+                <button id="verify-button" type="button">Verify</button>
+            </div>
+
+            <!-- Results Display Area -->
+            <div id="results-area" class="rounded-box">
+                <p style="color: #888; text-align: center;">Results will appear here after verification.</p>
+            </div>
+
+            <p class="mt-4" style="margin-top: 20px; font-size: 0.85rem; color: #555;">NOTE: This is a prototype using a simulated database for Amoxicillin in Nairobi.</p>
+        </div>
+    </section>
+
+    <!-- 2. Features (Core Objectives ii & iii) -->
+    <section id="features" class="content-section alt-bg">
+        <div class="container">
+            <h2>Key Features of PharmaCheck</h2>
+            <div class="features-container">
+                <div class="feature-item">
+                    <i class="fas fa-shield-halved feature-icon"></i>
+                    <h3>Real-Time Verification</h3>
+                    <p>Instantly checks serial numbers against the mock genuine stock database to expedite the identification of legitimate pharmaceutical items.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-triangle-exclamation feature-icon" style="color: var(--secondary-alert);"></i>
+                    <h3>Counterfeit & Clone Alerts</h3>
+                    <p>Flags suspicious or cloned identifiers, actively contributing to the reduction of counterfeit drug distribution in the supply chain.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-calendar-check feature-icon"></i>
+                    <h3>Expiry Flags</h3>
+                    <p>Automatically warns pharmacists if a genuine serial number belongs to stock that has passed its safety expiration date.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-clipboard-list feature-icon"></i>
+                    <h3>Audit Logging</h3>
+                    <p>Securely logs every verification attempt to Firestore, creating an audit trail for dependable stock management and dispensing practices.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. About the Project (Replacing Gallery/Testimonials) -->
+    <section id="about" class="content-section">
+        <div class="container">
+            <h2>Our Mission</h2>
+            <div style="max-width: 800px; margin: 0 auto; text-align: left;">
+                <!-- Updated "About Us" Content -->
+                <p>At PharmaCheck, our core mission is to safeguard public health by directly confronting the grave threat posed by counterfeit and substandard Amoxicillin in Kenya's supply chain.</p>
+                <p>Developed as an academic prototype, PharmaCheck is an accessible, user-friendly verification tool specifically designed for licensed chemists in Nairobi County. By enabling real-time checking of serial numbers and batch integrity, we empower pharmacists to dramatically improve medicine safety processes, ensuring they handle and dispense only verified, dependable stock to their patients.</p>
+                
+                <h3 style="margin-top: 30px;">Project Scope and Focus</h3>
+                <p>This academic prototype is strictly delimited to developing a web-based verification system focusing exclusively on the drug Amoxicillin within Nairobi County. The system relies entirely on a simulated database for verification to demonstrate core functionality, with the architecture built for seamless future integration with official regulatory records. Features such as mobile application deployment or advanced AI authentication are intentionally excluded from this initial scope to maintain a focused development effort.</p>
+                <p style="margin-top: 30px;">For reporting issues or contacting support, please use the email address <a href="mailto:support@pharmacheck.com">support@pharmacheck.com</a> or call +254 7XX XXX XXX during business hours.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content flex-row">
+                <div class="footer-col">
+                    <h4>PharmaCheck</h4>
+                    <p>A Medicine Verification System Prototype for Kenya.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Developed At</h4>
+                    <ul>
+                        <li><a href="#">Strathmore University</a></li>
+                        <li>Diploma in Business Information Technology</li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Target Location</h4>
+                    <ul>
+                        <li>Nairobi County, Kenya</li>
+                        <li>Drug Focus: Amoxicillin</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="current-year"></span> Natalie Salome. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Footer Year
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        // Mobile Nav Toggle functionality is already included in the <script type="module"> block
+    </script>
+</body>
+</html>
