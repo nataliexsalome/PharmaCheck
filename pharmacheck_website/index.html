@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PharmaCheck: Medicine Verification Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- Google Fonts: Inter (for body) and Playfair Display (for headings) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome for Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="css/verify.css" />
+  </head>
+  <body>
+    <script>
+    // if (!isLoggedIn) {
+    //   window.location.replace("authorization.html");
+    // }
+      document.addEventListener("DOMContentLoaded", function () {
+        const target = document.getElementById("verification-tool");
+        const button = document.getElementById("verification-link");
+        function toggleButton() {
+          const targetPosition = target.getBoundingClientRect().top;
+          const windowHeight = window.innerHeight;
+
+          // Show button when target is *above* the viewport (user has scrolled past it)
+          if (targetPosition < -120) {
+            //   button.style.display = "inline-block";
+            button.classList.add("show");
+          } else {
+            //   button.style.display = "none";
+            button.classList.remove("show");
+          }
+        }
+
+        // Run on scroll and on load
+        window.addEventListener("scroll", toggleButton);
+        toggleButton();
+      });
+    </script>
+
+    <!-- Header -->
+    <header id="main-header">
+      <div class="container flex-row">
+        <div class="logo"><a href="#verification-tool">PharmaCheck</a></div>
+
+        <!-- Main Navigation Links -->
+        <nav class="main-nav" id="main-navigation">
+          <ul>
+            <!-- New Nav Links: Verif Tool and Report / Contact -->
+            <li class="d-md-none"><a href="index.html">Verify</a></li>
+            <li><a href="reportcontact.html">Report / Contact</a></li>
+          </ul>
+          <div class="nav-right-actions">
+            <!-- <div id="auth-status" class="auth-status">Status: Connecting...</div> -->
+            <!-- Primary CTA button for desktop -->
+            <a
+              href="#verification-tool"
+              class="cta-button nav-button desktop-nav-cta"
+              id="verification-link"
+              >Verify Drug</a
+            >
+
+            <!-- <a href="reportcontact.html" class="nav-right-link">Report / Contact</a></li> -->
+          </div>
+        </nav>
+        <!-- Mobile Menu Toggle -->
+        <button
+          id="mobile-menu-toggle"
+          aria-label="Toggle Menu"
+          aria-expanded="false"
+        >
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 1. Verification Tool (Core Objective i) -->
+    <section id="verification-tool" class="content-section">
+      <div class="verification-box rounded-box">
+        <h2 class="h1" style="color: var(--primary-trust); margin-bottom: 5px">
+          Medicine Authentication Tool
+        </h2>
+        <p style="margin-bottom: 25px; color: #666">
+          Enter the Amoxicillin batch or serial identifier below to confirm its
+          legitimacy.
+        </p>
+
+        <div class="input-group">
+          <div class="input-wrapper">
+            <i class="fas fa-barcode input-icon"></i>
+            <input
+              type="text"
+              id="serial-input"
+              placeholder="e.g., A1234567890 or C9876543210"
+              required
+            />
+          </div>
+          <button id="verify-button" type="button">Verify</button>
+        </div>
+
+        <!-- Results Display Area -->
+        <div id="results-area" class="rounded-box">
+          <p style="color: #888; text-align: center">
+            Results will appear here after verification.
+          </p>
+        </div>
+
+        <p
+          class="mt-4"
+          style="margin-top: 20px; font-size: 0.85rem; color: #555"
+        >
+          NOTE: This is a prototype using a simulated database for Amoxicillin
+          in Nairobi.
+        </p>
+        <div>
+          <i class="fa-solid fa-circle-xmark disconnected" id="statusIcon"></i>
+          <span id="statusText" style="margin-left: 4px; font-size: 0.8rem"
+            >Not Connected</span
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Features (Core Objectives ii & iii) -->
+    <section id="features" class="content-section alt-bg">
+      <div class="container">
+        <h2>Key Features of PharmaCheck</h2>
+        <div class="features-container">
+          <div class="feature-item">
+            <i class="fas fa-shield-halved feature-icon"></i>
+            <h3>Real-Time Verification</h3>
+            <p>
+              Instantly checks serial numbers against the mock genuine stock
+              database to expedite the identification of legitimate
+              pharmaceutical items.
+            </p>
+          </div>
+          <div class="feature-item">
+            <i
+              class="fas fa-triangle-exclamation feature-icon"
+              style="color: var(--secondary-alert)"
+            ></i>
+            <h3>Counterfeit & Clone Alerts</h3>
+            <p>
+              Flags suspicious or cloned identifiers, actively contributing to
+              the reduction of counterfeit drug distribution in the supply
+              chain.
+            </p>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-calendar-check feature-icon"></i>
+            <h3>Expiry Flags</h3>
+            <p>
+              Automatically warns pharmacists if a genuine serial number belongs
+              to stock that has passed its safety expiration date.
+            </p>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-clipboard-list feature-icon"></i>
+            <h3>Audit Logging</h3>
+            <p>
+              Securely logs every verification attempt to Firestore, creating an
+              audit trail for dependable stock management and dispensing
+              practices.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. About the Project (Replacing Gallery/Testimonials) -->
+    <section id="about" class="content-section">
+      <div class="container">
+        <h2>Our Mission</h2>
+        <div style="max-width: 800px; margin: 0 auto; text-align: left">
+          <!-- Updated "About Us" Content -->
+          <p>
+            At PharmaCheck, our core mission is to safeguard public health by
+            directly confronting the grave threat posed by counterfeit and
+            substandard Amoxicillin in Kenya's supply chain.
+          </p>
+          <p>
+            Developed as an academic prototype, PharmaCheck is an accessible,
+            user-friendly verification tool specifically designed for licensed
+            chemists in Nairobi County. By enabling real-time checking of serial
+            numbers and batch integrity, we empower pharmacists to dramatically
+            improve medicine safety processes, ensuring they handle and dispense
+            only verified, dependable stock to their patients.
+          </p>
+
+          <h3 style="margin-top: 30px">Project Scope and Focus</h3>
+          <p>
+            This academic prototype is strictly delimited to developing a
+            web-based verification system focusing exclusively on the drug
+            Amoxicillin within Nairobi County. The system relies entirely on a
+            simulated database for verification to demonstrate core
+            functionality, with the architecture built for seamless future
+            integration with official regulatory records. Features such as
+            mobile application deployment or advanced AI authentication are
+            intentionally excluded from this initial scope to maintain a focused
+            development effort.
+          </p>
+          <p style="margin-top: 30px">
+            For reporting issues or contacting support, please use the email
+            address
+            <a href="mailto:support@pharmacheck.com">support@pharmacheck.com</a>
+            or call +254 7XX XXX XXX during business hours.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <div class="footer-content flex-row">
+          <div class="footer-col">
+            <h4>PharmaCheck</h4>
+            <p>A Medicine Verification System Prototype for Kenya.</p>
+          </div>
+          <div class="footer-col">
+            <h4>Developed At</h4>
+            <ul>
+              <li><a href="#">Strathmore University</a></li>
+              <li>Diploma in Business Information Technology</li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Target Location</h4>
+            <ul>
+              <li>Nairobi County, Kenya</li>
+              <li>Drug Focus: Amoxicillin</li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>
+            &copy; <span id="current-year"></span> Natalie Salome. All Rights
+            Reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script type="module" src="js/verify.js"></script>
+    <script src="js/socket.js"></script>
+
+    <script>
+      // Footer Year
+      document.getElementById("current-year").textContent =
+        new Date().getFullYear();
+
+      // Mobile Nav Toggle functionality is already included in the <script type="module"> block
+    </script>
+  </body>
+</html>

@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+
+{% block title %}Login / Register — PharmaCheck{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/authorization.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section id="auth-section" class="content-section">
+    <div class="auth-container">
+
+        <!-- Tabs -->
+        <div class="tab-buttons">
+            <button id="login-tab" class="tab active-tab">Login</button>
+            <button id="signup-tab" class="tab">Sign Up</button>
+        </div>
+
+        <!-- LOGIN PANEL -->
+        <div id="login-panel" class="auth-panel active-panel">
+            <h2 class="h1">Pharmacist Login</h2>
+            <p class="subtitle">Access your verification dashboard.</p>
+
+            <form id="login-form" method="POST" action="{{ url_for('login') }}">
+                <div class="input-group">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input name="email" type="email" placeholder="Email" required>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input name="password" type="password" placeholder="Password" required>
+                </div>
+
+                <button type="submit" class="cta-button auth-button">
+                    <i class="fas fa-sign-in-alt"></i> Login Securely
+                </button>
+            </form>
+        </div>
+
+        <!-- SIGNUP PANEL -->
+        <div id="signup-panel" class="auth-panel">
+            <h2 class="h1">New Account Registration</h2>
+            <p class="subtitle">For Licensed Pharmacists only.</p>
+
+            <form id="signup-form" method="POST" action="{{ url_for('signup') }}">
+    
+    <!-- ROLE SELECT -->
+    <div class="input-group">
+        <i class="fas fa-user-shield input-icon"></i>
+        <select name="role" id="role-select" required>
+            <option value="Pharmacist" selected>Pharmacist</option>
+            <option value="Admin">Admin</option>
+        </select>
+    </div>
+
+    <!-- LICENSE FIELD (hidden only if Admin chosen) -->
+    <div class="input-group" id="license-field">
+        <i class="fas fa-id-card input-icon"></i>
+        <input name="license" type="text" placeholder="Pharmacy License Number" />
+    </div>
+
+    <div class="input-group">
+        <i class="fas fa-envelope input-icon"></i>
+        <input name="email" type="email" placeholder="Professional Email" required />
+    </div>
+
+    <div class="input-group">
+        <i class="fas fa-lock input-icon"></i>
+        <input name="password" type="password" placeholder="Choose a Password" required />
+    </div>
+
+    <button type="submit" class="cta-button auth-button">
+        <i class="fas fa-user-plus"></i> Register Account
+    </button>
+
+</form>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/authorization.js') }}"></script>
+{% endblock %}

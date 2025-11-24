@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PharmaCheck: Pharmacist Access</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
+    <link rel="stylesheet" href="css/authorization.css" />
+  </head>
+  <body>
+    <header id="main-header">
+      <div class="container flex-row">
+        <div class="logo">
+          <a href="index.html">PharmaCheck</a>
+        </div>
+        <nav class="main-nav">
+          <ul>
+            <li><a href="index.html">Verify Medicine</a></li>
+            <li><a href="reportcontact.html">Report / Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <section id="auth-section" class="content-section">
+      <div class="auth-container">
+        
+        <div class="tab-buttons">
+          <button id="login-tab" class="tab active-tab">Login</button>
+          <button id="signup-tab" class="tab">Sign Up</button>
+        </div>
+
+        <div id="login-panel" class="auth-panel active-panel">
+          <h2 class="h1">Pharmacist Login</h2>
+          <p class="subtitle">Access your verification dashboard.</p>
+          
+          <form id="login-form">
+            <div class="input-group">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" placeholder="Email (e.g., jane@chemist.com)" required />
+            </div>
+            
+            <div class="input-group">
+              <i class="fas fa-lock input-icon"></i>
+              <input type="password" placeholder="Password" required />
+            </div>
+
+            <button type="submit" class="cta-button auth-button">
+              <i class="fas fa-sign-in-alt"></i> Login Securely
+            </button>
+          </form>
+
+          <p class="forgot-link">
+            <a href="#">Forgot Password?</a>
+          </p>
+        </div>
+
+        <div id="signup-panel" class="auth-panel">
+          <h2 class="h1">New Account Registration</h2>
+          <p class="subtitle">For Licensed Pharmacists only.</p>
+          
+          <form id="signup-form">
+            
+            <div class="input-group">
+              <i class="fas fa-id-card input-icon"></i>
+              <input type="text" placeholder="Pharmacy License Number (e.g., PKE/C/XXXX)" required />
+            </div>
+
+            <div class="input-group">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" placeholder="Professional Email" required />
+            </div>
+            
+            <div class="input-group">
+              <i class="fas fa-lock input-icon"></i>
+              <input type="password" placeholder="Choose a Password" required />
+            </div>
+
+            <div class="input-group">
+              <i class="fas fa-lock input-icon"></i>
+              <input type="password" placeholder="Confirm Password" required />
+            </div>
+
+            <p class="license-note">
+              <i class="fas fa-info-circle"></i> Verification of your license number may take up to 24 hours.
+            </p>
+
+            <button type="submit" class="cta-button auth-button">
+              <i class="fas fa-user-plus"></i> Register Account
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; <span id="current-year"></span> Natalie Salome. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/authorization.js"></script>
+  </body>
+</html>
