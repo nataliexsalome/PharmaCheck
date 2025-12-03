@@ -1,5 +1,0 @@
-cd pharmacheck_website\backend
-
-venv\Scripts\activate
-
-python app.py
