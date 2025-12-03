@@ -1,0 +1,338 @@
+{% extends "layoutAdmin.html" %}
+
+{% block title %}Admin Reports — PharmaCheck{% endblock %}
+
+{% block styles %}
+<!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --primary: #10B981; /* Green */
+            --secondary: #374151; /* Gray */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+
+        .table-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .table-container thead th {
+            position: sticky;
+            top: 0;
+            background-color: var(--secondary);
+            color: white;
+        }
+        .sortable:hover {
+            cursor: pointer;
+            background-color: #e5e7eb;
+        }
+        .sort-icon {
+            display: inline-block;
+            margin-left: 0.4rem;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+    </style>{% endblock %}
+
+{% block content %}
+
+
+<div id="app" class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-8">
+    <!-- Segmented Control using Tailwind peer utility -->
+        <div class="flex justify-center mb-2">
+            <!-- Outer container for the segmented control -->
+            <div class="flex bg-gray-100 rounded-xl p-1 space-x-1 shadow-lg max-w-lg w-full sm:w-auto items-center">
+                
+                <!-- Report Option 1: Queries Log Report -->
+                <a href="{{ url_for('admin_reports') }}" class="relative flex-1 cursor-pointer select-none transition duration-300 ease-in-out">
+                    <!-- Radio Input (Hidden but set as peer) -->
+                    <input type="radio" name="report-type" value="queries-log" class="peer sr-only">
+                    
+                    <!-- Visible Button Content (The peer-checked utility applies the active style when the input is checked) -->
+                    <span class="block px-6 py-2.5 text-center text-sm font-semibold text-gray-800 rounded-lg transition duration-300 ease-in-out 
+                                 peer-checked:bg-green-100 peer-checked:shadow-md peer-checked:shadow-gray-500/30">
+                        Queries Log Report
+                    </span>
+                </a>
+
+                <!-- Report Option 2: Pharm Submissions Report -->
+                <a href="{{ url_for('admin_reports2') }}" class="relative flex-1 cursor-pointer select-none transition duration-300 ease-in-out">
+                    <!-- Radio Input (Hidden but set as peer) -->
+                    <input type="radio" name="report-type" value="pharm-submissions" checked class="peer sr-only">
+                    
+                    <!-- Visible Button Content -->
+                    <span class="block px-6 py-2.5 text-center text-sm font-semibold text-gray-800 rounded-lg transition duration-300 ease-in-out 
+                                 peer-checked:bg-green-100 peer-checked:shadow-md peer-checked:shadow-gray-500/30">
+                        Pharm Submissions Report
+                    </span>
+                </a>
+                
+            </div>
+        </div>
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-2">
+            Report Page – Submitted Entries
+        </h1>
+
+        <!-- Filter Section -->
+        <div class="flex flex-col md:flex-row gap-4 mb-6 items-end bg-gray-50 p-4 rounded-lg shadow-inner">
+
+            <div class="flex flex-col flex-grow">
+                <label class="text-sm mb-1">Start Date</label>
+                <input type="date" id="start_date" class="p-2 border rounded-lg">
+            </div>
+
+            <div class="flex flex-col flex-grow">
+                <label class="text-sm mb-1">End Date</label>
+                <input type="date" id="end_date" class="p-2 border rounded-lg">
+            </div>
+
+            <button id="filter_btn"
+                class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition">
+                <span id="filter_text">Run Report</span>
+            </button>
+
+            <button id="pdf_btn"
+                class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:bg-red-300"
+                disabled>
+                Download PDF
+            </button>
+
+        </div>
+
+        <!-- Message Box -->
+        <div id="message_box" class="hidden p-3 mb-4 rounded-lg text-sm"></div>
+
+        <!-- Table -->
+        <div class="table-container border rounded-lg shadow-md">
+            <table id="report_table" class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs uppercase sortable" data-sort="product_name">
+                            Product Name <span class="sort-icon"></span>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs uppercase sortable" data-sort="batch_serial">
+                            Batch/Serial No <span class="sort-icon"></span>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs uppercase sortable" data-sort="location">
+                            Location <span class="sort-icon"></span>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs uppercase sortable" data-sort="description">
+                            Description <span class="sort-icon"></span>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs uppercase sortable" data-sort="email">
+                            Follow-Up Email <span class="sort-icon"></span>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs uppercase sortable" data-sort="created_at">
+                            Created At <span class="sort-icon"></span>
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody id="report_body" class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td colspan="6" class="text-center text-gray-500 py-4">
+                            Select a date range and click “Run Report”.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading_overlay" class="loading-overlay hidden">
+            <svg class="animate-spin h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor"></circle>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4zm2 5.29A7.96 7.96 0 014 12H0c0 3.04 1.14 5.82 3 7.94l3-2.65z">
+                </path>
+            </svg>
+            <span class="ml-3 text-lg text-gray-700">Loading...</span>
+        </div>
+
+    </div>
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- JS -->
+    <script>
+        let currentData = [];
+        let currentSort = { key: "created_at", direction: "desc" };
+
+        function setMessage(msg, type="success") {
+            const box = document.getElementById("message_box");
+            box.textContent = msg;
+            box.className =
+                `p-3 mb-4 rounded-lg text-sm ${type === "error" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`;
+            box.classList.remove("hidden");
+        }
+
+        function clearMessage() {
+            document.getElementById("message_box").classList.add("hidden");
+        }
+
+        function setLoading(state) {
+            document.getElementById("loading_overlay").classList.toggle("hidden", !state);
+            document.getElementById("filter_btn").disabled = state;
+            document.getElementById("pdf_btn").disabled = state || currentData.length === 0;
+            document.getElementById("filter_text").textContent = state ? "Loading..." : "Run Report";
+        }
+
+        function updateSortIcons() {
+            document.querySelectorAll("#report_table .sortable").forEach(th => {
+                const icon = th.querySelector(".sort-icon");
+                icon.textContent = "";
+                if (th.dataset.sort === currentSort.key) {
+                    icon.textContent = currentSort.direction === "asc" ? "▲" : "▼";
+                }
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById("report_body");
+            tbody.innerHTML = "";
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No entries found.</td></tr>`;
+                return;
+            }
+
+            currentData = data;
+            document.getElementById("pdf_btn").disabled = false;
+
+            // Sorting
+            data.sort((a, b) => {
+                let A = a[currentSort.key] || "";
+                let B = b[currentSort.key] || "";
+                return currentSort.direction === "asc" ? A.localeCompare(B) : B.localeCompare(A);
+            });
+
+            updateSortIcons();
+
+            data.forEach(r => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="px-4 py-3">${r.product_name || ""}</td>
+                    <td class="px-4 py-3">${r.batch_serial || ""}</td>
+                    <td class="px-4 py-3">${r.location || ""}</td>
+                    <td class="px-4 py-3">${r.description || ""}</td>
+                    <td class="px-4 py-3">${r.email || ""}</td>
+                    <td class="px-4 py-3 text-gray-600">${r.created_at || ""}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function fetchReport() {
+            clearMessage();
+
+            const s = document.getElementById("start_date").value;
+            const e = document.getElementById("end_date").value;
+
+            if (!s || !e) return setMessage("Select both dates.", "error");
+
+            if (new Date(s) > new Date(e))
+                return setMessage("Start date cannot be after end date.", "error");
+
+            setLoading(true);
+
+            try {
+                const res = await fetch(`/api/report2?start_date=${s}&end_date=${e}`);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    setMessage(data.error || "API error", "error");
+                    renderTable([]);
+                    return;
+                }
+
+                renderTable(data);
+                setMessage(`Loaded ${data.length} entries.`);
+            } catch (err) {
+                console.error(err);
+                setMessage("Network error.", "error");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function downloadPDF() {
+            const s = document.getElementById("start_date").value;
+            const e = document.getElementById("end_date").value;
+
+            const res = await fetch("/api/generate_pdf_2", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    reportData: currentData,
+                    startDate: s,
+                    endDate: e
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                return setMessage(err.error || "PDF error", "error");
+            }
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `report_page_${s}_to_${e}.pdf`;
+            a.click();
+
+            URL.revokeObjectURL(url);
+            setMessage("PDF downloaded.");
+        }
+
+        function handleSortClick(e) {
+            const key = e.currentTarget.dataset.sort;
+            if (key === currentSort.key)
+                currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
+            else {
+                currentSort.key = key;
+                currentSort.direction = "asc";
+            }
+            renderTable(currentData);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const today = new Date();
+            const last30 = new Date(today); last30.setDate(today.getDate() - 30);
+
+            const fmt = d => d.toISOString().split("T")[0];
+
+            document.getElementById("start_date").value = fmt(last30);
+            document.getElementById("end_date").value = fmt(today);
+
+            document.getElementById("filter_btn").addEventListener("click", fetchReport);
+            document.getElementById("pdf_btn").addEventListener("click", downloadPDF);
+
+            document.querySelectorAll(".sortable").forEach(th =>
+                th.addEventListener("click", handleSortClick)
+            );
+
+            fetchReport();
+        });
+    </script>
+
+{% endblock %}

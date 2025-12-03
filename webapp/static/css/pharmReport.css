@@ -1,0 +1,220 @@
+:root {
+  --primary-trust: #2a6a50;
+  --secondary-alert: #d9534f;
+  --highlight-action: #4ab28b;
+  --cream: #fff8f0;
+  --dark-text: #333333;
+  --heading-font: "Playfair Display", serif;
+  --body-font: "Inter", sans-serif;
+}
+
+/* Body */
+body {
+  font-family: var(--body-font);
+  background-color: var(--cream);
+  color: var(--dark-text);
+  margin: 0;
+  padding: 0;
+}
+
+/* Title Section */
+.report-container {
+  padding: 25px 20px;
+}
+
+.report-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.report-title {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.report-title h2 {
+  font-family: var(--heading-font);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary-trust);
+  margin-bottom: 10px;
+}
+
+.report-title p {
+  font-size: 1.2rem;
+  color: #555;
+}
+
+/* Grid */
+.report-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* Form Card */
+.report-form-card {
+  flex: 2 1 65%;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.report-form-card h3 {
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-trust);
+  margin-bottom: 15px;
+}
+
+.report-form-card .icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+}
+
+.alert-text {
+  background: #ffe6e6;
+  border-left: 4px solid var(--secondary-alert);
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  color: #555;
+}
+
+/* Form Fields */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 5px;
+  color: #444;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: var(--body-font);
+}
+
+.form-group textarea {
+  resize: none;
+}
+
+/* Form grid */
+.form-grid {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.form-grid > .form-group {
+  flex: 1 1 45%;
+}
+
+/* Optional Section */
+.form-section {
+  margin-top: 20px;
+  border-top: 1px solid #ddd;
+  padding-top: 15px;
+}
+
+.form-section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--primary-trust);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+  background-color: #1f533f;
+}
+
+/* Contact Card */
+.contact-card {
+  flex: 1 1 30%;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.contact-card h3 {
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: var(--primary-trust);
+}
+
+.contact-info {
+  margin-bottom: 15px;
+}
+
+.contact-item {
+  margin-bottom: 10px;
+}
+
+.contact-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.contact-text {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.contact-section h4 {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: var(--primary-trust);
+}
+
+.contact-section a {
+  text-decoration: none;
+  color: var(--primary-trust);
+  font-weight: 500;
+}
+
+.contact-section a:hover {
+  color: var(--highlight-action);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .report-grid {
+    flex-direction: column;
+  }
+
+  .form-grid > .form-group {
+    flex: 1 1 100%;
+  }
+}

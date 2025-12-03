@@ -1,0 +1,119 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+      <title>{% block title %}PharmaCheck{% endblock %}</title>
+
+      <!-- Fonts -->
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Playfair+Display:wght@400;700&display=swap"
+        rel="stylesheet"
+      />
+
+      <!-- Icons -->
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        crossorigin="anonymous"
+      />
+
+      <!-- Page-specific CSS -->
+      {% block styles %}
+      {% endblock %}
+      <style>
+  .flex-row {
+    flex-direction: row !important;
+    display: flex;
+      flex: 1 1;
+  }
+  .footer-col {
+    flex:1 1;
+  }</style>
+  </head>
+
+  <body>
+
+      <!-- ================== HEADER ================== -->
+      <header id="main-header">
+        <div class="container flex-row">
+          <div class="logo">
+            <a href="{{ url_for('auth') }}">PharmaCheck</a>
+          </div>
+
+          <nav class="main-nav">
+            <ul>
+              <li><a href="{{ url_for('pharm_dashboard') }}">Verify Medicine</a></li>
+              <li><a href="{{ url_for('pharm_report') }}">Report / Contact</a></li>
+              {% if 'user' in session %}<li><a href="{{ url_for('logout') }}">Logout</a></li>{% endif %}
+            </ul>
+          </nav>
+        </div>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              {{ message }}
+              <button onclick="this.parentElement.style.display='none';" style="float:right; cursor:pointer;">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+      <!-- ================== PAGE CONTENT ================== -->
+      <main>
+          {% block content %}
+          {% endblock %}
+      </main>
+
+      <!-- ================== FOOTER ================== -->
+      <footer>
+        <div class="container">
+          <div class="footer-content flex-row">
+            <div class="footer-col">
+              <h4>PharmaCheck</h4>
+              <p>A Medicine Verification System Prototype for Kenya.</p>
+            </div>
+            <div class="footer-col">
+              <h4>Developed At</h4>
+              <ul>
+                <li><a href="#">Strathmore University</a></li>
+                <li>Diploma in Business Information Technology</li>
+              </ul>
+            </div>
+            <div class="footer-col">
+              <h4>Target Location</h4>
+              <ul>
+                <li>Nairobi County, Kenya</li>
+                <li>Drug Focus: Amoxicillin</li>
+              </ul>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p>
+              &copy; <span id="current-year"></span> Natalie Salome. All Rights
+              Reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+
+      <!-- Global JS (footer year, etc.) -->
+      <script>
+          const y = document.getElementById("current-year");
+          if (y) y.textContent = new Date().getFullYear();
+      </script>
+
+      <!-- Page-specific scripts -->
+      {% block scripts %}
+      {% endblock %}
+
+  </body>
+  </html>

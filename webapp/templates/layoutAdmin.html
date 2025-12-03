@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>{% block title %}PharmaCheck -Admin{% endblock %}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Playfair+Display:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+    />
+    <!-- Load Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+<!-- Configure custom colors and font -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-bg': '#fcfaf7', // Light cream background
+                        'primary-text': '#047857', // Dark Emerald Green (similar to the image)
+                        'secondary-text': '#1f2937', // Dark Gray for hover
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Page-specific CSS -->
+    {% block styles %}
+    {% endblock %}
+</head>
+
+<body>
+
+    <header id="main-header" class="bg-white shadow-md sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+
+                <!-- Logo/Branding Section -->
+                <div class="flex-shrink-0">
+                    <a href="{{ url_for('auth') }}" class="text-3xl font-extrabold text-primary-text hover:text-emerald-900 transition duration-150">
+                        Pharma<span class="font-normal italic">Check</span>
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation Links (Visible on small screens and up) -->
+                <nav class="hidden sm:ml-6 md:flex sm:items-center">
+                    <ul class="flex space-x-8">
+                        <li>
+                            <a href="{{ url_for('pharm_dashboard') }}" class="text-primary-text hover:text-secondary-text px-3 py-2 text-base font-medium rounded-lg transition duration-150">
+                                Verify
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('add_records') }}" class="text-primary-text hover:text-secondary-text px-3 py-2 text-base font-medium rounded-lg transition duration-150">
+                                Add Records
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('admin_reports') }}" class="text-primary-text hover:text-secondary-text px-3 py-2 text-base font-medium rounded-lg transition duration-150">
+                                Reports
+                            </a>
+                        </li>
+                        {% if 'user' in session %}<li>
+                            <!-- Logout button styled to look more prominent -->
+                            <a href="{{ url_for('logout') }}" class="bg-emerald-500 text-white hover:bg-emerald-600 px-4 py-2 text-base font-medium rounded-lg shadow-lg transition duration-150">
+                                Logout
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+
+                <!-- Mobile Menu Button (Hamburger) -->
+                <div class="md:hidden">
+                    <button id="menu-button" type="button" class="inline-flex items-center justify-center p-2 rounded-md text-primary-text hover:text-secondary-text hover:bg-stone-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-text transition duration-150" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <!-- Icon for menu open state (Hamburger) -->
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <!-- Icon for menu close state (X) - hidden initially, toggled by JS if we were using an icon change -->
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu (Collapsible) -->
+        <div class="sm:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="{{ url_for('add_records') }}" class="text-primary-text hover:bg-stone-200 hover:text-secondary-text block px-3 py-2 rounded-md text-base font-medium transition duration-150">Verify Medicine</a>
+                <a href="{{ url_for('pharm_report') }}" class="text-primary-text hover:bg-stone-200 hover:text-secondary-text block px-3 py-2 rounded-md text-base font-medium transition duration-150">Report / Contact</a>
+                <a href="{{ url_for('logout') }}" class="mt-2 bg-primary-text text-white hover:bg-emerald-600 block px-4 py-2 rounded-lg text-base font-medium shadow-md transition duration-150">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          {% for category, message in messages %}
+            {% set tailwind_class = {
+                'success': 'bg-green-100 border-green-400 text-green-700',
+                'danger': 'bg-red-100 border-red-400 text-red-700',
+                'warning': 'bg-yellow-100 border-yellow-400 text-yellow-700',
+                'info': 'bg-blue-100 border-blue-400 text-blue-700'
+            }.get(category, 'bg-gray-100 border-gray-400 text-gray-700') %}
+            
+            <div class="{{ tailwind_class }} border px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline">{{ message }}</span>
+                <span class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" onclick="this.parentElement.style.display='none';">
+                    <svg class="fill-current h-6 w-6" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+                </span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    
+    <!-- ================== PAGE CONTENT ================== -->
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- ================== FOOTER (Tailwind) ================== -->
+    <footer class="bg-primary-bg border-t border-gray-200 mt-12 w-full">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+            <!-- Footer Content: 3 Columns -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 border-b pb-8 border-gray-200">
+                
+                <!-- Column 1: PharmaCheck -->
+                <div class="space-y-3">
+                    <h4 class="text-xl font-bold text-primary-text">PharmaCheck</h4>
+                    <p class="text-gray-600 text-sm">A Medicine Verification System Prototype for Kenya.</p>
+                </div>
+                
+                <!-- Column 2: Developed At -->
+                <div class="space-y-3">
+                    <h4 class="text-xl font-bold text-primary-text">Developed At</h4>
+                    <ul class="space-y-1 text-sm text-gray-600 list-none p-0">
+                        <li><a href="#" class="hover:text-primary-text transition duration-150">Strathmore University</a></li>
+                        <li>Diploma in Business Information Technology</li>
+                    </ul>
+                </div>
+                
+                <!-- Column 3: Target Location -->
+                <div class="space-y-3">
+                    <h4 class="text-xl font-bold text-primary-text">Target Location</h4>
+                    <ul class="space-y-1 text-sm text-gray-600 list-none p-0">
+                        <li>Nairobi County, Kenya</li>
+                        <li>Drug Focus: Amoxicillin</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Footer Bottom (Copyright) -->
+            <div class="mt-4 text-center">
+                <p class="text-xs text-gray-500">
+                    &copy; <span id="current-year" class="font-semibold"></span> Natalie Salome. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Global JS (footer year, etc.) -->
+    <script>
+        const y = document.getElementById("current-year");
+        if (y) y.textContent = new Date().getFullYear();
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (menuButton && mobileMenu) {
+                // Add click listener to the hamburger button
+                menuButton.addEventListener('click', () => {
+                    // Toggle the 'hidden' class to show/hide the mobile menu
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+
+    <!-- Page-specific scripts -->
+    {% block scripts %}
+    {% endblock %}
+
+</body>
+</html>
