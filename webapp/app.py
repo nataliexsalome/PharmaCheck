@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, session, url_for, flash, send_file, render_template_string
+from flask import Flask, request, jsonify, render_template, redirect, session, url_for, flash, send_file, render_template_string, request
 from flask_cors import CORS
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -95,7 +95,7 @@ def signup():
             "role": role
         }).execute()
 
-        flash("Registration successful! Please log in.", "success")
+        flash("Registration successful! Please confirm your email then log in.", "success")
         return redirect(url_for("auth"))
 
     except Exception as e:
@@ -138,7 +138,6 @@ def login():
 
         # 4️⃣ Redirect based on role
         if role == "Admin":
-            flash("Admin login successful!", "success")
             return redirect("/admin")
         else:
             flash("Pharmacist login successful!", "success")
@@ -153,9 +152,12 @@ def login():
 # --------------------------
 @app.route("/logout")
 def logout():
-    session.pop("user", None)
-    flash(f"Logged out successfully! ", "success")
-    return redirect(url_for("auth"))
+    if "user" in session:
+        session.pop("user", None)
+        flash(f"Logged out successfully! ", "success")
+        return redirect(url_for("auth"))
+    else:
+        return redirect(url_for("auth"))
 
 
 # --------------------------
@@ -168,28 +170,23 @@ def index():
     return redirect(url_for("auth"))
 
     
-
-# Home route
-# @app.route('/')
-# def home():
-#     return render_template('index.html')  # Make sure you create a templates/index.html file
-
-#  Example API route. 
 #  Dw abt this. Just used this to access the data directly so i don't have to login to Supabase everytime
-@app.route('/api/verify/data', methods=['GET'])
-def get_data():
-    response1 = supabase.table("AMOXICILLIN_BATCH").select("*").execute() 
-    response2 = supabase.table("AMOXICILLIN_SERIAL").select("*").execute()
-    return jsonify({"AMOXICILLIN_BATCH":response1.data,"AMOXICILLIN_SERIAL":response2.data})
+# @app.route('/api/verify/data', methods=['GET'])
+# def get_data():
+#     response1 = supabase.table("AMOXICILLIN_BATCH").select("*").execute() 
+#     response2 = supabase.table("AMOXICILLIN_SERIAL").select("*").execute()
+#     return jsonify({"AMOXICILLIN_BATCH":response1.data,"AMOXICILLIN_SERIAL":response2.data})
 
-@app.route('/api/report/data', methods=['GET'])
-def get_data_report():
-    response1 = supabase.table("report_page").select("*").execute() 
-    return jsonify({"Table Data":response1.data})
+# @app.route('/api/report/data', methods=['GET'])
+# def get_data_report():
+#     response1 = supabase.table("report_page").select("*").execute() 
+#     return jsonify({"Table Data":response1.data})
 
 # Verify serial/batch numbers here
 @app.route('/api/verify', methods=['POST'])
 def verify_data():
+    if "user" not in session:
+        return redirect(url_for(request.referrer))
     user_input = request.json.get('serial')
     response1 = supabase.table("AMOXICILLIN_BATCH").select("*").eq("batch_number", user_input).execute() 
     response2 = supabase.table("AMOXICILLIN_SERIAL").select("*").eq("serial_no", user_input).execute()
@@ -221,6 +218,8 @@ def verify_data():
 
 @app.route("/api/report", methods=["POST"])
 def add_report():
+    if "user" not in session:
+        return redirect(url_for(request.referrer))
     data = request.get_json()
 
     # Extract nested form_data
@@ -273,6 +272,8 @@ def add_report():
 
 @app.route("/api/log", methods=["POST"])
 def log_transaction():
+    if "user" not in session:
+        return redirect(url_for("auth"))
     data = request.get_json()
 
     try:
@@ -346,7 +347,7 @@ def add_batch():
 @app.route('/admin/add-serial', methods=['POST'])
 def add_serial():
     if "user" not in session or session.get("role") != "Admin":
-        return redirect(url_for("auth"))
+        return redirect(url_for(request.referrer))
     serial_no = request.form.get('serial_no')
     strength_form = request.form.get('strength_form')
     units_per_pack = request.form.get('units_per_pack')
@@ -491,168 +492,178 @@ def aggregate_log_data(raw_logs):
 @app.route('/api/report', methods=['GET'])
 def get_report_data():
     """Endpoint to fetch and return aggregated log data as JSON."""
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+    if "user" not in session or session.get("role") != "Admin":
+        return redirect(url_for(request.referrer))
+    else:
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
 
-    if not start_date or not end_date:
-        return jsonify({"error": "Start and end dates are required."}), 400
+        if not start_date or not end_date:
+            return jsonify({"error": "Start and end dates are required."}), 400
 
-    raw_logs = get_logs_from_db(start_date, end_date)
-    aggregated_data = aggregate_log_data(raw_logs)
+        raw_logs = get_logs_from_db(start_date, end_date)
+        aggregated_data = aggregate_log_data(raw_logs)
 
-    return jsonify(aggregated_data)
+        return jsonify(aggregated_data)
 
 
 @app.route('/api/generate_pdf', methods=['POST'])
 def generate_pdf_report():
     """
     Endpoint to generate a PDF report from the aggregated data.
-    Requires a library like ReportLab or WeasyPrint.
     """
-    # 1. Get the JSON data sent from the client
-    data = request.get_json()
-    if not data or 'reportData' not in data:
-        return jsonify({"error": "No report data provided."}), 400
+    if "user" not in session or session.get("role") != "Admin":
+        return redirect(url_for(request.referrer))
+    else:
+        # 1. Get the JSON data sent from the client
+        data = request.get_json()
+        if not data or 'reportData' not in data:
+            return jsonify({"error": "No report data provided."}), 400
 
-    report_data = data['reportData']
-    start_date = data.get('startDate', 'N/A')
-    end_date = data.get('endDate', 'N/A')
+        report_data = data['reportData']
+        start_date = data.get('startDate', 'N/A')
+        end_date = data.get('endDate', 'N/A')
 
-    # --- PDF GENERATION LOGIC (Example using ReportLab concept) ---
-    try:
-
-
-        buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, title="Verification Log Report")
-        styles = getSampleStyleSheet()
-        elements = []
-
-        # -----------------------------------------------------
-        # 1. PHARMACHECK TEXT LOGO
-        # -----------------------------------------------------
-
-        logo_style = ParagraphStyle(
-            name="LogoStyle",
-            parent=styles["Normal"],
-            fontName="Helvetica-Oblique",
-            fontSize=22,
-            textColor=colors.HexColor("#2A6A50"),  # Logo color
-            alignment=1,
-        )
-
-        elements.append(Paragraph("Pharmacheck", logo_style))
-        elements.append(Spacer(1, 18))
-
-        # -----------------------------------------------------
-        # 2. TITLE + DATE PERIOD
-        # -----------------------------------------------------
-        elements.append(Paragraph("Pharmacy Query Log Report", styles["Title"]))
-        elements.append(Paragraph(f"Period: {start_date} to {end_date}", styles["Normal"]))
-
-        # Add space before table
-        elements.append(Spacer(1, 24))
-
-        # -----------------------------------------------------
-        # 3. TABLE DATA
-        # -----------------------------------------------------
-        table_headers = [
-            "Serial No.",
-            "Total Queries",
-            "Authentic Count",
-            "Counterfeit Count",
-            "Expired Count",
-            "Last Query"
-        ]
-
-        table_rows = [table_headers]
-
-        for row in report_data:
-            table_rows.append([
-                row.get("serial", ""),
-                str(row.get("total_queries", "")),
-                str(row.get("authentic_count", "")),
-                str(row.get("counterfeit_count", "")),
-                str(row.get("expired_count", "")),
-                row.get("last_query_timestamp") or ""
-            ])
-
-        # -----------------------------------------------------
-        # 4. TABLE STYLE
-        # -----------------------------------------------------
-        if len(table_rows) > 1:
-
-            table = Table(table_rows)
-
-            header_bg = colors.HexColor("#12B981")  # Your green
-
-            table.setStyle(TableStyle([
-                # HEADER
-                ("BACKGROUND", (0, 0), (-1, 0), header_bg),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("ALIGN", (0, 0), (-1, 0), "CENTER"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 11),
-                ("TOPPADDING", (0, 0), (-1, 0), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
-
-                # BODY
-                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
-                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 1), (-1, -1), 10),
-                ("ALIGN", (0, 1), (-1, -1), "CENTER"),
-
-                # GRID
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-
-                # Padding
-                ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 1), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
-            ]))
-
-            elements.append(table)
-
-        else:
-            elements.append(Paragraph(
-                "No data available for the selected time frame.",
-                styles["Normal"]
-            ))
-
-        # -----------------------------------------------------
-        # 5. FINALIZE PDF
-        # -----------------------------------------------------
-        doc.build(elements)
-        buffer.seek(0)
+        # --- PDF GENERATION LOGIC (Example using ReportLab concept) ---
+        try:
 
 
-        return send_file(
-            buffer,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=f'pharm_log_report_{start_date}_to_{end_date}.pdf'
-        )
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, title="Verification Log Report")
+            styles = getSampleStyleSheet()
+            elements = []
 
-    except ImportError:
-        # Fallback if ReportLab is not installed
-        print("ReportLab library not found. PDF generation not supported.")
-        return jsonify({"error": "PDF generation library (e.g., ReportLab) is not installed on the server."}), 500
-    except Exception as e:
-        print(f"An error occurred during PDF generation: {e}")
-        return jsonify({"error": f"Failed to generate PDF: {str(e)}"}), 500
+            # -----------------------------------------------------
+            # 1. PHARMACHECK TEXT LOGO
+            # -----------------------------------------------------
+
+            logo_style = ParagraphStyle(
+                name="LogoStyle",
+                parent=styles["Normal"],
+                fontName="Helvetica-Oblique",
+                fontSize=22,
+                textColor=colors.HexColor("#2A6A50"),  # Logo color
+                alignment=1,
+            )
+
+            elements.append(Paragraph("Pharmacheck", logo_style))
+            elements.append(Spacer(1, 18))
+
+            # -----------------------------------------------------
+            # 2. TITLE + DATE PERIOD
+            # -----------------------------------------------------
+            elements.append(Paragraph("Pharmacy Query Log Report", styles["Title"]))
+            elements.append(Paragraph(f"Period: {start_date} to {end_date}", styles["Normal"]))
+
+            # Add space before table
+            elements.append(Spacer(1, 24))
+
+            # -----------------------------------------------------
+            # 3. TABLE DATA
+            # -----------------------------------------------------
+            table_headers = [
+                "Serial No.",
+                "Total Queries",
+                "Authentic Count",
+                "Counterfeit Count",
+                "Expired Count",
+                "Last Query"
+            ]
+
+            table_rows = [table_headers]
+
+            for row in report_data:
+                table_rows.append([
+                    row.get("serial", ""),
+                    str(row.get("total_queries", "")),
+                    str(row.get("authentic_count", "")),
+                    str(row.get("counterfeit_count", "")),
+                    str(row.get("expired_count", "")),
+                    row.get("last_query_timestamp") or ""
+                ])
+
+            # -----------------------------------------------------
+            # 4. TABLE STYLE
+            # -----------------------------------------------------
+            if len(table_rows) > 1:
+
+                table = Table(table_rows)
+
+                header_bg = colors.HexColor("#12B981")  # Your green
+
+                table.setStyle(TableStyle([
+                    # HEADER
+                    ("BACKGROUND", (0, 0), (-1, 0), header_bg),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("ALIGN", (0, 0), (-1, 0), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, 0), 11),
+                    ("TOPPADDING", (0, 0), (-1, 0), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+
+                    # BODY
+                    ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+                    ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
+                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                    ("FONTSIZE", (0, 1), (-1, -1), 10),
+                    ("ALIGN", (0, 1), (-1, -1), "CENTER"),
+
+                    # GRID
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+
+                    # Padding
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                    ("TOPPADDING", (0, 1), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
+                ]))
+
+                elements.append(table)
+
+            else:
+                elements.append(Paragraph(
+                    "No data available for the selected time frame.",
+                    styles["Normal"]
+                ))
+
+            # -----------------------------------------------------
+            # 5. FINALIZE PDF
+            # -----------------------------------------------------
+            doc.build(elements)
+            buffer.seek(0)
+
+
+            return send_file(
+                buffer,
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f'pharm_log_report_{start_date}_to_{end_date}.pdf'
+            )
+
+        except ImportError:
+            # Fallback if ReportLab is not installed
+            print("ReportLab library not found. PDF generation not supported.")
+            return jsonify({"error": "PDF generation library (e.g., ReportLab) is not installed on the server."}), 500
+        except Exception as e:
+            print(f"An error occurred during PDF generation: {e}")
+            return jsonify({"error": f"Failed to generate PDF: {str(e)}"}), 500
 
 @app.route('/admin/reports/queries')
 def admin_reports():
-    return render_template("admin_reports.html")
+    if "user" not in session or session.get("role") != "Admin":
+        return redirect(url_for('auth'))
+    else:
+        return render_template("admin_reports.html")
 
 # -------------------------------
 # Pharmacy Reported Drugs report
 # -------------------------------
 # Fetch rows directly from report_page
 # -------------------------------
+
 def get_reports_from_db(start_date_str, end_date_str):
     try:
+        # Parse the input date strings into datetime objects
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
     except ValueError:
@@ -660,12 +671,20 @@ def get_reports_from_db(start_date_str, end_date_str):
         return []
 
     try:
+        # Normalize the start_date to the beginning of the day (00:00:00)
+        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # Normalize the end_date to the end of the day (23:59:59)
+        end_date = end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        # Query the database for records within the date range
         response = supabase.table("report_page") \
             .select("product_name, batch_serial, location, description, email, created_at") \
             .gte("created_at", start_date.isoformat()) \
             .lte("created_at", end_date.isoformat()) \
             .execute()
 
+        # Return the data or an empty list if no data is found
         return response.data or []
 
     except Exception as e:
@@ -677,131 +696,140 @@ def get_reports_from_db(start_date_str, end_date_str):
 # -------------------------------
 @app.route("/api/report2", methods=["GET"])
 def get_report_data2():
-    start_date = request.args.get("start_date")
-    end_date = request.args.get("end_date")
+    if "user" not in session or session.get("role") != "Admin":
+        return redirect(url_for(request.referrer))
+    else:
+        start_date = request.args.get("start_date")
+        end_date = request.args.get("end_date")
 
-    if not start_date or not end_date:
-        return jsonify({"error": "Start and end dates required"}), 400
+        if not start_date or not end_date:
+            return jsonify({"error": "Start and end dates required"}), 400
 
-    rows = get_reports_from_db(start_date, end_date)
+        rows = get_reports_from_db(start_date, end_date)
 
-    # Format timestamps
-    for row in rows:
-        if "created_at" in row and isinstance(row["created_at"], str):
-            row["created_at"] = row["created_at"].replace("T", " ").split("+")[0]
+        # Format timestamps
+        for row in rows:
+            if "created_at" in row and isinstance(row["created_at"], str):
+                row["created_at"] = row["created_at"].replace("T", " ").split("+")[0]
 
-    return jsonify(rows)
+        return jsonify(rows)
 
 # -------------------------------
 # PDF GENERATION
 # -------------------------------
 @app.route("/api/generate_pdf_2", methods=["POST"])
 def generate_pdf_report_2():
-    data = request.get_json()
-    if not data or "reportData" not in data:
-        return jsonify({"error": "No report data provided"}), 400
+    if "user" not in session or session.get("role") != "Admin":
+        return redirect(url_for(request.referrer))
+    else:
+        data = request.get_json()
+        if not data or "reportData" not in data:
+            return jsonify({"error": "No report data provided"}), 400
 
-    report_data = data["reportData"]
-    start_date = data.get("startDate", "N/A")
-    end_date = data.get("endDate", "N/A")
+        report_data = data["reportData"]
+        start_date = data.get("startDate", "N/A")
+        end_date = data.get("endDate", "N/A")
 
-    try:
-        buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, title="Report Page Export")
-        styles = getSampleStyleSheet()
-        elements = []
-
-
-        # -----------------------------------------------------
-        # TEXT LOGO AT TOP
-        # -----------------------------------------------------
-        logo_style = ParagraphStyle(
-            name="LogoStyle",
-            parent=styles["Normal"],
-            fontName="Helvetica-Oblique",       # Italic
-            fontSize=22,
-            textColor=colors.HexColor("#2A6A50"),
-            alignment=1,
-        )
-
-        logo_paragraph = Paragraph("Pharmacheck", logo_style)
-        elements.append(logo_paragraph)
-        elements.append(Spacer(1, 18))   # Space under logo
+        try:
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, title="Report Page Export")
+            styles = getSampleStyleSheet()
+            elements = []
 
 
-        # Title
-        elements.append(Paragraph("Report Page Export", styles["Title"]))
-        elements.append(Paragraph(f"Period: {start_date} to {end_date}", styles["Normal"]))
-        elements.append(Paragraph("<br/>", styles["Normal"]))
+            # -----------------------------------------------------
+            # TEXT LOGO AT TOP
+            # -----------------------------------------------------
+            logo_style = ParagraphStyle(
+                name="LogoStyle",
+                parent=styles["Normal"],
+                fontName="Helvetica-Oblique",       # Italic
+                fontSize=22,
+                textColor=colors.HexColor("#2A6A50"),
+                alignment=1,
+            )
 
-        # Extra spacing before table
-        elements.append(Spacer(1, 24))
+            logo_paragraph = Paragraph("Pharmacheck", logo_style)
+            elements.append(logo_paragraph)
+            elements.append(Spacer(1, 18))   # Space under logo
 
-        # Table headers
-        headers = ["Product Name", "Batch/Serial No", "Location", "Description", "Email", "Created At"]
-        rows = [headers]
 
-        # Table rows
-        for r in report_data:
-            rows.append([
-                r.get("product_name", ""),
-                r.get("batch_serial", ""),
-                r.get("location", ""),
-                r.get("description", ""),
-                r.get("email", ""),
-                r.get("created_at", "")
-            ])
+            # Title
+            elements.append(Paragraph("Report Page Export", styles["Title"]))
+            elements.append(Paragraph(f"Period: {start_date} to {end_date}", styles["Normal"]))
+            elements.append(Paragraph("<br/>", styles["Normal"]))
 
-        table = Table(rows)
-        
-        # Header color you wanted
-        header_bg = colors.HexColor("#12B981")
+            # Extra spacing before table
+            elements.append(Spacer(1, 24))
 
-        # -----------------------------------------------------
-        # TABLE STYLE
-        # -----------------------------------------------------
-        table.setStyle(TableStyle([
-            # HEADER
-            ("BACKGROUND", (0, 0), (-1, 0), header_bg),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("ALIGN", (0, 0), (-1, 0), "CENTER"),
-            ("FONTSIZE", (0, 0), (-1, 0), 11),
+            # Table headers
+            headers = ["Product Name", "Batch/Serial No", "Location", "Description", "Email", "Created At"]
+            rows = [headers]
 
-            # BODY
-            ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-            ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
-            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-            ("FONTSIZE", (0, 1), (-1, -1), 10),
+            # Table rows
+            for r in report_data:
+                rows.append([
+                    r.get("product_name", ""),
+                    r.get("batch_serial", ""),
+                    r.get("location", ""),
+                    r.get("description", ""),
+                    r.get("email", ""),
+                    r.get("created_at", "")
+                ])
 
-            # GRID
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+            table = Table(rows)
+            
+            # Header color you wanted
+            header_bg = colors.HexColor("#12B981")
 
-            # Padding for readability
-            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ]))
+            # -----------------------------------------------------
+            # TABLE STYLE
+            # -----------------------------------------------------
+            table.setStyle(TableStyle([
+                # HEADER
+                ("BACKGROUND", (0, 0), (-1, 0), header_bg),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ALIGN", (0, 0), (-1, 0), "CENTER"),
+                ("FONTSIZE", (0, 0), (-1, 0), 11),
 
-        elements.append(table)
-        doc.build(elements)
-        buffer.seek(0)
+                # BODY
+                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+                ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
+                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                ("FONTSIZE", (0, 1), (-1, -1), 10),
 
-        return send_file(
-            buffer,
-            mimetype="application/pdf",
-            as_attachment=True,
-            download_name=f"report_page_{start_date}_to_{end_date}.pdf"
-        )
+                # GRID
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
 
-    except Exception as e:
-        print(e)
-        return jsonify({"error": f"PDF error: {str(e)}"}), 500
+                # Padding for readability
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]))
 
-@app.route('/admin/reports/pharmReports')
+            elements.append(table)
+            doc.build(elements)
+            buffer.seek(0)
+
+            return send_file(
+                buffer,
+                mimetype="application/pdf",
+                as_attachment=True,
+                download_name=f"report_page_{start_date}_to_{end_date}.pdf"
+            )
+
+        except Exception as e:
+            print(e)
+            return jsonify({"error": f"PDF error: {str(e)}"}), 500
+
+@app.route('/admin/reports/pharmReports', methods=['GET'])
 def admin_reports2():
-    return render_template("admin_reports2.html")
+    if "user" not in session or session.get("role") != "Admin":
+        return redirect(url_for('auth'))
+    else:
+        return render_template("admin_reports2.html")
 
 
 

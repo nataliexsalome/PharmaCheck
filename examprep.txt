@@ -1,0 +1,7 @@
+why did i use flask?
+-prevents getting overwhelmed with too many files 
+-only learn what you 
+
+What APIs did i use?
+-supabase AUTH APIs
+- REST APIs

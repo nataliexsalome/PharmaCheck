@@ -48,7 +48,7 @@
 
     <header id="main-header" class="bg-white shadow-md sticky top-0 z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center justify-between h-16">
 
                 <!-- Logo/Branding Section -->
                 <div class="flex-shrink-0">
@@ -57,30 +57,48 @@
                     </a>
                 </div>
 
+                {% if 'user' in session %}
                 <!-- Desktop Navigation Links (Visible on small screens and up) -->
-                <nav class="hidden sm:ml-6 md:flex sm:items-center">
+                <nav class="hidden sm:ml-6 md:flex items-center">
                     <ul class="flex space-x-8">
-                        <li>
+                        <li class="flex items-center">
                             <a href="{{ url_for('pharm_dashboard') }}" class="text-primary-text hover:text-secondary-text px-3 py-2 text-base font-medium rounded-lg transition duration-150">
                                 Verify
                             </a>
                         </li>
-                        <li>
+                        <li class="flex items-center">
                             <a href="{{ url_for('add_records') }}" class="text-primary-text hover:text-secondary-text px-3 py-2 text-base font-medium rounded-lg transition duration-150">
                                 Add Records
                             </a>
                         </li>
-                        <li>
+                        <li class="flex items-center">
                             <a href="{{ url_for('admin_reports') }}" class="text-primary-text hover:text-secondary-text px-3 py-2 text-base font-medium rounded-lg transition duration-150">
                                 Reports
                             </a>
                         </li>
-                        {% if 'user' in session %}<li>
-                            <!-- Logout button styled to look more prominent -->
-                            <a href="{{ url_for('logout') }}" class="bg-emerald-500 text-white hover:bg-emerald-600 px-4 py-2 text-base font-medium rounded-lg shadow-lg transition duration-150">
-                                Logout
-                            </a>
+                        
+                        {% if 'user' in session %}
+                        <!-- User Dropdown with Avatar and Role -->
+                         <li class="relative">
+                            <button id="avatar-btn" class="flex items-center space-x-2 text-primary-text hover:text-secondary-text px-3 py-2 text-base font-medium rounded-lg transition duration-150">
+                                <!-- Avatar Image -->
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyKpQUy8JP90MAZxFjU0P9bPqkUWL35fd8Ag&s" alt="User Avatar" class="w-8 h-8 rounded-full">
+                                <span>{{ session['role'] }}</span>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div id="dropdown-menu" class="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg border border-gray-200 hidden">
+                                <div class="py-2 px-4 text-xs">
+                                <div class="font-medium text-primary-text overflow-hidden text-ellipsis whitespace-nowrap" style="max-width: 180px;">
+                                    {{ session['user'] }}
+                                </div>
+                                </div>
+                                <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-500 hover:bg-red-200 hover:text-gray-700 transition duration-150">
+                                    Logout
+                                </a>
+                            </div>
                         </li>
+                        
                         {% endif %}
                     </ul>
                 </nav>
@@ -96,15 +114,20 @@
                         <!-- Icon for menu close state (X) - hidden initially, toggled by JS if we were using an icon change -->
                     </button>
                 </div>
+                {% endif %}
             </div>
         </div>
 
         <!-- Mobile Menu (Collapsible) -->
         <div class="sm:hidden hidden" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1">
+                {% if 'user' in session %}
                 <a href="{{ url_for('add_records') }}" class="text-primary-text hover:bg-stone-200 hover:text-secondary-text block px-3 py-2 rounded-md text-base font-medium transition duration-150">Verify Medicine</a>
                 <a href="{{ url_for('pharm_report') }}" class="text-primary-text hover:bg-stone-200 hover:text-secondary-text block px-3 py-2 rounded-md text-base font-medium transition duration-150">Report / Contact</a>
                 <a href="{{ url_for('logout') }}" class="mt-2 bg-primary-text text-white hover:bg-emerald-600 block px-4 py-2 rounded-lg text-base font-medium shadow-md transition duration-150">Logout</a>
+                {% else %}
+                <a href="{{ url_for('auth') }}" class="mt-2 bg-primary-text text-white hover:bg-emerald-600 block px-4 py-2 rounded-lg text-base font-medium shadow-md transition duration-150">Home</a>   
+                {% endif %}
             </div>
         </div>
     </header>
@@ -195,6 +218,23 @@
                 });
             }
         });
+        // JavaScript to toggle the dropdown visibility when clicking the avatar
+    document.addEventListener("DOMContentLoaded", function () {
+        const avatarBtn = document.getElementById("avatar-btn");
+        const dropdownMenu = document.getElementById("dropdown-menu");
+
+        avatarBtn.addEventListener("click", function () {
+            // Toggle visibility of the dropdown
+            dropdownMenu.classList.toggle("hidden");
+        });
+
+        // Optionally, hide the dropdown when clicking outside of the menu
+        document.addEventListener("click", function (event) {
+            if (!dropdownMenu.contains(event.target) && !avatarBtn.contains(event.target)) {
+                dropdownMenu.classList.add("hidden");
+            }
+        });
+    });
     </script>
 
     <!-- Page-specific scripts -->
