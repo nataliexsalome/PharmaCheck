@@ -442,6 +442,7 @@ def get_logs_from_db(start_date_str, end_date_str):
 def aggregate_log_data(raw_logs):
     """
     Aggregates raw log data by serial number to count frequencies and statuses.
+    Also returns total counts for queries, authentic, counterfeit, and expired statuses.
     """
     # Key: serial number, Value: aggregation object
     report_data = defaultdict(lambda: {
@@ -454,6 +455,12 @@ def aggregate_log_data(raw_logs):
         'last_query_timestamp': datetime.min
     })
 
+    # Total aggregates
+    total_queries = 0
+    authentic_count = 0
+    counterfeit_count = 0
+    expired_count = 0
+
     for log in raw_logs:
         serial = log['serial']
         status = log['status']
@@ -462,14 +469,18 @@ def aggregate_log_data(raw_logs):
         entry = report_data[serial]
         entry['serial'] = serial
         entry['total_queries'] += 1
+        total_queries += 1
 
         # Count status frequencies
         if status.upper() == 'AUTHENTIC':
             entry['authentic_count'] += 1
+            authentic_count += 1
         elif status.upper() == 'COUNTERFEIT':
             entry['counterfeit_count'] += 1
+            counterfeit_count += 1
         elif status.upper() == 'EXPIRED':
             entry['expired_count'] += 1
+            expired_count += 1
         else:
             entry['other_count'] += 1
 
@@ -486,7 +497,13 @@ def aggregate_log_data(raw_logs):
         else:
             item['last_query_timestamp'] = None
 
-    return final_report
+    # Return aggregates along with the detailed report data
+    return final_report, {
+        "total_queries": total_queries,
+        "authentic_count": authentic_count,
+        "counterfeit_count": counterfeit_count,
+        "expired_count": expired_count,
+    }
 
 
 @app.route('/api/report', methods=['GET'])
@@ -502,9 +519,12 @@ def get_report_data():
             return jsonify({"error": "Start and end dates are required."}), 400
 
         raw_logs = get_logs_from_db(start_date, end_date)
-        aggregated_data = aggregate_log_data(raw_logs)
+        aggregated_data, summary = aggregate_log_data(raw_logs)
 
-        return jsonify(aggregated_data)
+        return jsonify({
+            "reportData": aggregated_data,
+            "summary": summary
+        })
 
 
 @app.route('/api/generate_pdf', methods=['POST'])
@@ -524,10 +544,14 @@ def generate_pdf_report():
         start_date = data.get('startDate', 'N/A')
         end_date = data.get('endDate', 'N/A')
 
+        # Calculate summary data
+        total_queries = sum(row.get("total_queries", 0) for row in report_data)
+        authentic_count = sum(row.get("authentic_count", 0) for row in report_data)
+        counterfeit_count = sum(row.get("counterfeit_count", 0) for row in report_data)
+        expired_count = sum(row.get("expired_count", 0) for row in report_data)
+
         # --- PDF GENERATION LOGIC (Example using ReportLab concept) ---
         try:
-
-
             buffer = io.BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter, title="Verification Log Report")
             styles = getSampleStyleSheet()
@@ -536,7 +560,6 @@ def generate_pdf_report():
             # -----------------------------------------------------
             # 1. PHARMACHECK TEXT LOGO
             # -----------------------------------------------------
-
             logo_style = ParagraphStyle(
                 name="LogoStyle",
                 parent=styles["Normal"],
@@ -555,11 +578,23 @@ def generate_pdf_report():
             elements.append(Paragraph("Pharmacy Query Log Report", styles["Title"]))
             elements.append(Paragraph(f"Period: {start_date} to {end_date}", styles["Normal"]))
 
+            # -----------------------------------------------------
+            # 3. SUMMARY SECTION (New Section Added)
+            # -----------------------------------------------------
+            elements.append(Spacer(1, 18))  # Space before the summary section
+            summary_text = f"""
+                <b>Total Queries:</b> {total_queries}<br/>
+                <b>Authentic Queries:</b> {authentic_count}<br/>
+                <b>Counterfeit Queries:</b> {counterfeit_count}<br/>
+                <b>Expired Queries:</b> {expired_count}
+            """
+            elements.append(Paragraph(summary_text, styles["Normal"]))
+
             # Add space before table
             elements.append(Spacer(1, 24))
 
             # -----------------------------------------------------
-            # 3. TABLE DATA
+            # 4. TABLE DATA
             # -----------------------------------------------------
             table_headers = [
                 "Serial No.",
@@ -583,7 +618,7 @@ def generate_pdf_report():
                 ])
 
             # -----------------------------------------------------
-            # 4. TABLE STYLE
+            # 5. TABLE STYLE
             # -----------------------------------------------------
             if len(table_rows) > 1:
 
@@ -627,11 +662,10 @@ def generate_pdf_report():
                 ))
 
             # -----------------------------------------------------
-            # 5. FINALIZE PDF
+            # 6. FINALIZE PDF
             # -----------------------------------------------------
             doc.build(elements)
             buffer.seek(0)
-
 
             return send_file(
                 buffer,

@@ -1,4 +1,4 @@
-// --- CORE APPLICATION LOGIC ---
+
 
 // Mock database structure (Data tier)
 const MOCK_STOCK = {
@@ -88,7 +88,7 @@ const renderResult = (serial, result) => {
   let detailsHtml = "";
 
   if (result.status === "AUTHENTIC") {
-    message = `✅ VERIFIED: This Amoxicillin Serial ID is Authentic and Valid.`;
+    message = `✅ VERIFIED: This Amoxicillin ${result.serial?'Serial Number':'Batch Number'} is Authentic and Valid.`;
     className = "result-authentic";
     detailsHtml = `
                     <li><strong>Status:</strong> Authentic and Safe</li>
@@ -104,7 +104,7 @@ const renderResult = (serial, result) => {
                     }</li>
                 `;
   } else if (result.status === "EXPIRED") {
-    message = `⚠️ WARNING: This Amoxicillin Serial ID is Expired. Do Not Dispense.`;
+    message = `⚠️ WARNING: This Amoxicillin ${result.serial?'Serial Number':'Batch Number'} is Expired. Do Not Dispense.`;
     className = "result-expired";
     detailsHtml = `
                     <li><strong>Status:</strong> EXPIRED!</li>
@@ -127,7 +127,7 @@ const renderResult = (serial, result) => {
     className = "result-counterfeit";
     detailsHtml = `
                     <li><strong>Status:</strong> COUNTERFEIT</li>
-                    <li><strong>Reason:</strong> Serial number flagged or matched a known fraudulent identifier.</li>
+                    <li><strong>Reason:</strong> Batch / Serial number not listed.</li>
                     <li><strong>Batch/Serial Number:</strong> ${serial}</li>
                     <li><strong>ACTION:</strong> Immediately quarantine product and report to PPB.</li>
                 `;
@@ -187,16 +187,8 @@ const handleVerification = () => {
       '<div class="result-message result-expired visible">Please enter a valid serial or batch number (at least 5 characters).</div>';
     return;
   }
-
-  // Simulate network delay for verification process
   document.getElementById("results-area").innerHTML =
     '<p style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Verifying against simulated database...</p>';
-
-  /*  setTimeout(() => {
-                const result = getResult(input);
-                renderResult(input, result);
-            }, 1500); // 1.5 second delay simulation */
-
   axios
     .post("/api/verify", { serial: input })
     .then((response) => {

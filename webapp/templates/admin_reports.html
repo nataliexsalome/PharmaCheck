@@ -116,6 +116,29 @@
         <!-- Alert/Message Box -->
         <div id="message_box" class="hidden p-3 mb-4 rounded-lg text-sm" role="alert"></div>
 
+        <!-- Summary Section (Above Table) -->
+        <div id="summary_section" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <!-- Total Queries -->
+            <div class="bg-white p-6 rounded-lg shadow-lg text-center border border-gray-200">
+                <h3 class="text-xl font-bold text-gray-800">Total Queries</h3>
+                <p id="total_queries" class="text-3xl font-semibold text-gray-600">0</p>
+            </div>
+            <!-- Authentic Queries -->
+            <div class="bg-green-100 p-6 rounded-lg shadow-lg text-center border border-green-200">
+                <h3 class="text-xl font-bold text-green-800">Authentic Queries</h3>
+                <p id="authentic_count" class="text-3xl font-semibold text-green-600">0</p>
+            </div>
+            <!-- Counterfeit Queries -->
+            <div class="bg-red-100 p-6 rounded-lg shadow-lg text-center border border-red-200">
+                <h3 class="text-xl font-bold text-red-800">Counterfeit Queries</h3>
+                <p id="counterfeit_count" class="text-3xl font-semibold text-red-600">0</p>
+            </div>
+            <!-- Expired Queries -->
+            <div class="bg-yellow-100 p-6 rounded-lg shadow-lg text-center border border-yellow-200">
+                <h3 class="text-xl font-bold text-yellow-800">Expired Queries</h3>
+                <p id="expired_count" class="text-3xl font-semibold text-yellow-600">0</p>
+            </div>
+        </div>
         <!-- Report Table Container -->
         <div class="mt-8">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Query Aggregation Results</h2>
@@ -291,8 +314,8 @@
             }
 
             if (new Date(startDate) > new Date(endDate)) {
-                 setMessageBox('Start date cannot be after the end date.', 'error');
-                 return;
+                setMessageBox('Start date cannot be after the end date.', 'error');
+                return;
             }
 
             setLoading(true);
@@ -310,8 +333,16 @@
                     return;
                 }
 
-                renderTable(data);
-                setMessageBox(`Report successfully generated for ${data.length} unique serials.`, 'success');
+                renderTable(data.reportData);
+
+                // Update summary widgets
+                document.getElementById('total_queries').textContent = data.summary.total_queries;
+                document.getElementById('authentic_count').textContent = data.summary.authentic_count;
+                document.getElementById('counterfeit_count').textContent = data.summary.counterfeit_count;
+                document.getElementById('expired_count').textContent = data.summary.expired_count;
+
+                // Display success message
+                setMessageBox(`Report successfully generated for ${data.reportData.length} unique serials.`, 'success');
 
             } catch (error) {
                 console.error('API Fetch Error:', error);
